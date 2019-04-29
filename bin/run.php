@@ -45,7 +45,7 @@ if ($fb->login() === $fb::LOGIN_OK) {
 
 
 	// Load targets.
-	$target = json_decode(file_get_contents(__DIR__."/../storage/{$user}/target.json"), true);
+	$target = json_decode(preg_replace("/\/\/.+\n/", "", file_get_contents(__DIR__."/../storage/{$user}/target.json")), true);
 
 	// React targets.
 	foreach ($target as $username => $v) {
@@ -70,10 +70,11 @@ if ($fb->login() === $fb::LOGIN_OK) {
 			} else {
 				print "Visiting target's post: {$storyId}...\n";
 				$postInfo = $post->visit($storyId);
-				$react = $reactChooser($v);
+				$react = "skipped";
+				// $react = $reactChooser($v);
 				print "Decided to use {$react} react.\n";
 				print "Reacting {$storyId}...";
-				$postInfo->react($react);
+				// $postInfo->react($react);
 				print "OK\n";
 				$state["reacted"][$storyId] = [
 					"react" => $react,
