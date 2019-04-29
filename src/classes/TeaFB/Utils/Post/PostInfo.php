@@ -51,6 +51,11 @@ final class PostInfo implements SubUtilContract
 	private $reactionLink;
 
 	/**
+	 * @var string
+	 */
+	private $nextReferer;
+
+	/**
 	 * @param \TeaFB\TeaFB $fb
 	 * @param \TeaFB\Contracts\Util $util
 	 *
@@ -76,15 +81,16 @@ final class PostInfo implements SubUtilContract
 	 */
 	public function fetch(): bool
 	{
-		$this->setHtml(
-			$this->fb->exec(
-				$this->link,
-				[
-					CURLOPT_REFERER => $this->fb->getBaseUrl()."/home.php",
-					CURLOPT_FOLLOWLOCATION => true
-				]
-			)->out
+		$o = $this->fb->exec(
+			$this->link,
+			[
+				CURLOPT_REFERER => $this->fb->getBaseUrl()."/home.php",
+				CURLOPT_FOLLOWLOCATION => true
+			]
 		);
+
+		$this->nextReferer = $o->info["url"];
+		$this->setHtml($o->out);
 
 		// // Debug only
 		// $this->setHtml(file_get_contents("a.tmp"));
@@ -93,7 +99,7 @@ final class PostInfo implements SubUtilContract
 
 	/**
 	 * @param string $html
-	 * @throws \TeaFB\Exceptions\ProfileException
+	 * @throws \TeaFB\Exceptions\PostException
 	 * @return void
 	 */
 	public function setHtml(string $html): void
@@ -107,6 +113,28 @@ final class PostInfo implements SubUtilContract
 			return;
 		}
 		throw new PostException("Couldn't get the content");
+	}
+
+	/**
+	 * @param int $reactEnum
+	 * @throws \TeaFB\Exceptions\PostException
+	 * @return int
+	 */
+	public function react(int $reactEnum): int
+	{
+		if (
+			$reactEnum !== React::LIKE ||
+			$reactEnum !== React::LOVE ||
+			$reactEnum !== React::HAHA ||
+			$reactEnum !== React::WOW  ||
+			$reactEnum !== React::SAD  ||
+			$reactEnum !== React::ANGRY
+		) {
+			throw new PostException("Invalid reeaction {$reactEnum}");
+		}
+
+		$o = $this->fb->exec($this->reactionLink, [CURLOPT_REFERER => $this->nextReferer]);
+		file_put_contents("a.tmp", $o->out);
 	}
 
 	/**

@@ -6,6 +6,7 @@ require __DIR__."/../config/ammarfaizi2.php";
 use TeaFB\TeaFB;
 use TeaFB\Utils\Post;
 use TeaFB\Utils\Profile;
+use TeaFB\Utils\Post\React;
 
 $fb = new TeaFB($email, $password, $cookieFile);
 if ($fb->login() === $fb::LOGIN_OK) {
@@ -16,7 +17,7 @@ if ($fb->login() === $fb::LOGIN_OK) {
 	// }
 
 	$posts = $profile->visit("ammarfaizi2")->getReactablePosts();
-	$post->visit($posts[1]);
+	$post->visit($posts[1])->react(React::LIKE);
 
 } else {
 	printf("Login failed!\n");
