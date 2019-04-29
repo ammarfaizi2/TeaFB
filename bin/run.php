@@ -70,7 +70,7 @@ if ($fb->login() === $fb::LOGIN_OK) {
 				print "Skipping {$storyId}, it has already been reacted.\n";
 			} else {
 				print "Visiting target's post: {$storyId}...\n";
-				$postInfo = $post->visit($storyId);
+				// $postInfo = $post->visit($storyId);
 				$react = "skipped";
 				// $react = $reactChooser($v);
 				print "Decided to use {$react} react.\n";
@@ -97,5 +97,5 @@ for ($i=0; $i < 60; $i++) {
 	sleep(1);
 	print ".";
 }
-
+print "\n";
 endwhile;
