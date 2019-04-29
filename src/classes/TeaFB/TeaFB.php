@@ -44,6 +44,21 @@ final class TeaFB
 	private $proxyOpt = [];
 
 	/**
+	 * @const int
+	 */
+	public const LOGIN_OK = (1 << 0);
+
+	/**
+	 * @const int
+	 */
+	public const LOGIN_FAILED = (1 << 1);
+
+	/**
+	 * @const int
+	 */
+	public const LOGIN_CHECKPOINT = (1 << 2);
+
+	/**
 	 * @param string $email
 	 * @param string $password
 	 * @param string $cookieFile
@@ -69,9 +84,9 @@ final class TeaFB
 	}
 
 	/**
-	 * @return bool
+	 * @return int
 	 */
-	public function login(): bool
+	public function login(): int
 	{
 		$o = $this->exec("login.php");
 
@@ -97,6 +112,9 @@ final class TeaFB
 						}
 					}
 				}
+				$post["email"] = $this->email;
+				$post["pass"] = $this->password;
+				$post["login"] = "Log In";
 				unset($name, $m, $k, $v);
 				$this->exec(
 					$action,
@@ -109,7 +127,17 @@ final class TeaFB
 			}
 		}
 
-		return false;
+		$o = file_get_contents($this->cookieFile);
+
+		if (preg_match_all("/c_user/", $o)) {
+			return self::LOGIN_OK;
+		}
+
+		if (preg_match("/checkpoint/", $o)) {
+			return self::LOGIN_CHECKPOINT;
+		}
+
+		return self::LOGIN_FAILED;
 	}
 
 	/**
