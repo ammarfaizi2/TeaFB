@@ -1,6 +1,10 @@
 <?php
 
-$user = "ammarfaizi2";
+if (!isset($argv[1])) {
+	print "argv[1] is needed!\n";
+}
+
+$user = $argv[1];
 
 require __DIR__."/../src/autoload.php";
 require __DIR__."/../config/{$user}.php";
@@ -71,6 +75,7 @@ if ($fb->login() === $fb::LOGIN_OK) {
 				$postInfo->react($react);
 				print "OK\n";
 				$state["reacted"][$storyId] = [
+					"react" => $react,
 					"content" => $postInfo->getContent(),
 					"reacted_at" => date("Y-m-d H:i:s")
 				];
@@ -79,7 +84,6 @@ if ($fb->login() === $fb::LOGIN_OK) {
 		$state["last_reacted"] = date("Y-m-d H:i:s");
 		file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 	}
-
 } else {
 	printf("Login failed!\n");
 }
