@@ -13,6 +13,8 @@ use TeaFB\TeaFB;
 use TeaFB\Utils\Post;
 use TeaFB\Utils\Profile;
 use TeaFB\Utils\Post\React;
+use TeaFB\Exceptions\PostException;
+use TeaFB\Exceptions\ProfileException;
 
 $userDir = __DIR__."/../storage/{$user}";
 $targetFile = "{$userDir}/target.json";
@@ -50,7 +52,6 @@ if ($fb->login() === $fb::LOGIN_OK) {
 
 	// React targets.
 	foreach ($target as $username => $v) {
-
 		print "Visiting target profile: {$username}...\n";
 
 		// Load state.
@@ -65,27 +66,37 @@ if ($fb->login() === $fb::LOGIN_OK) {
 		}
 		$state["username"] = $username;
 		$state["last_reacted"] = null;
-		foreach($profile->visit($username)->getReactablePosts() as $storyId) {
-			if (isset($state["reacted"][$storyId])) {
-				print "Skipping {$storyId}, it has already been reacted.\n";
-			} else {
-				print "Visiting target's post: {$storyId}...\n";
-				// $postInfo = $post->visit($storyId);
-				$react = "skipped";
-				$react = $reactChooser($v);
-				print "Decided to use {$react} react.\n";
-				print "Reacting {$storyId}...";
-				// $postInfo->react($react);
-				print "OK\n";
-				$state["reacted"][$storyId] = [
-					"react" => $react,
-					"content" => $postInfo->getContent(),
-					"reacted_at" => date("Y-m-d H:i:s")
-				];
+		try {
+			foreach($profile->visit($username)->getReactablePosts() as $storyId) {
+				if (isset($state["reacted"][$storyId])) {
+					print "Skipping {$storyId}, it has already been reacted.\n";
+				} else {
+					try {
+						print "Visiting target's post: {$storyId}...\n";
+						$postInfo = $post->visit($storyId);
+						$react = "skipped";
+						// $react = $reactChooser($v);
+						print "Decided to use {$react} react.\n";
+						print "Reacting {$storyId}...";
+						// $postInfo->react($react);
+						print "OK\n";
+						$state["reacted"][$storyId] = [
+							"react" => $react,
+							"content" => $postInfo->getContent(),
+							"reacted_at" => date("Y-m-d H:i:s")
+						];	
+					} catch (PostException $e) {
+						print "Got post exception for {$username}_{$storyId}!\n";
+						print $e->getMessage()."\n";
+					}
+				}
 			}
+			$state["last_reacted"] = date("Y-m-d H:i:s");
+			file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+		} catch (ProfileException $e) {
+			print "Got profile exception for {$username}!\n";
+			print $e->getMessage()."\n";
 		}
-		$state["last_reacted"] = date("Y-m-d H:i:s");
-		file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 	}
 } else {
 	printf("Login failed!\n%s\n", date("Y-m-d H:i:s"));
