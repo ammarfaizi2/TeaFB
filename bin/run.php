@@ -62,6 +62,7 @@ if ($fb->login() === $fb::LOGIN_OK) {
 				$state = [];
 			}
 		}
+		$state["username"] = $username;
 		$state["last_reacted"] = null;
 		foreach($profile->visit($username)->getReactablePosts() as $storyId) {
 			if (isset($state["reacted"][$storyId])) {
