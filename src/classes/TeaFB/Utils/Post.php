@@ -3,8 +3,8 @@
 namespace TeaFB\Utils;
 
 use TeaFB\TeaFB;
-use TeaFB\Utils\Profile\ProfileInfo;
-use TeaFB\Exceptions\ProfileException;
+use TeaFB\Utils\Post\PostInfo;
+use TeaFB\Exceptions\PostException;
 use TeaFB\Contracts\Util as UtilContract;
 
 /**
@@ -13,7 +13,7 @@ use TeaFB\Contracts\Util as UtilContract;
  * @package \TeaFB\Utils
  * @version 0.0.1
  */
-final class Profile implements UtilContract
+final class Post implements UtilContract
 {
 	/**
 	 * @var \TeaFB\TeaFB
@@ -31,14 +31,14 @@ final class Profile implements UtilContract
 	}
 
 	/**
-	 * @param string $username
-	 * @return \TeaFB\Utils\ProfileVisitor\ProfileInfo
+	 * @param string $storyId
+	 * @return \TeaFB\Utils\Post\PostInfo
 	 */
-	public function visit(string $username): ProfileInfo
+	public function visit(string $storyId): PostInfo
 	{
-		$profileInfo = new ProfileInfo($this->fb, $this);
-		$profileInfo->setUsername($username);
-		$profileInfo->fetch();
-		return $profileInfo;
+		$post = new PostInfo($this->fb, $this);
+		$post->setStoryId($storyId);
+		$post->fetch();
+		return $post;
 	}
 }

@@ -1,19 +1,19 @@
 <?php
 
-namespace TeaFB\Utils\Profile;
+namespace TeaFB\Utils\Post;
 
 use TeaFB\TeaFB;
-use TeaFB\Exceptions\ProfileException;
+use TeaFB\Exceptions\PostException;
 use TeaFB\Contracts\Util as UtilContract;
 use TeaFB\Contracts\SubUtil as SubUtilContract;
 
 /**
  * @author Ammar Faizi <ammarfaizi2@gmail.com> https://www.facebook.com/ammarfaizi2
  * @license MIT
- * @package \TeaFB\Utils\Profile
+ * @package \TeaFB\Utils\Post
  * @version 0.0.1
  */
-final class ProfileInfo implements SubUtilContract
+final class PostInfo implements SubUtilContract
 {
 	/**
 	 * @var \TeaFB\TeaFB
@@ -28,7 +28,7 @@ final class ProfileInfo implements SubUtilContract
 	/**
 	 * @var string
 	 */
-	private $name;
+	private $content;
 
 	/**
 	 * @var string
@@ -39,6 +39,16 @@ final class ProfileInfo implements SubUtilContract
 	 * @var array
 	 */
 	private $reactablePosts = [];
+
+	/**
+	 * @var string
+	 */
+	private $storyId;
+
+	/**
+	 * @var string
+	 */
+	private $reactionLink;
 
 	/**
 	 * @param \TeaFB\TeaFB $fb
@@ -53,12 +63,12 @@ final class ProfileInfo implements SubUtilContract
 	}
 
 	/**
-	 * @param string $username
+	 * @param string $storyId
 	 * @return void
 	 */
-	public function setUsername(string $username): void
+	public function setStoryId(string $storyId): void
 	{
-		$this->link = $this->fb->getBaseUrl()."/".$username;
+		$this->link = $this->fb->getBaseUrl()."/".$storyId;
 	}
 
 	/**
@@ -89,15 +99,14 @@ final class ProfileInfo implements SubUtilContract
 	public function setHtml(string $html): void
 	{
 		if (preg_match("/(?:<title>)(.+)(?:<\/title>)/Usi", $html, $m)) {
-			$this->name = ed($m[1]);
-			if (preg_match_all("/(?:id=\"like_)(\d+)(?:\")/Usi", $html, $m)) {
-				foreach ($m[1] as $storyId) {
-					$this->reactablePosts[] = $storyId;
-				}
+			$this->content = ed($m[1]);
+
+			if (preg_match("/(?:href=\")(\/reactions\/picker\/.+{$this->storyId}.+)(?:\")/Usi", $html, $m)) {
+				$this->reactionLink = ed($m[1]);
 			}
 			return;
 		}
-		throw new ProfileException("Couldn't get the profile name");
+		throw new PostException("Couldn't get the content");
 	}
 
 	/**
@@ -111,8 +120,8 @@ final class ProfileInfo implements SubUtilContract
 	/**
 	 * @return string
 	 */
-	public function getName(): string
+	public function getContent(): string
 	{
-		return $this->name;
+		return $this->content;
 	}
 }
