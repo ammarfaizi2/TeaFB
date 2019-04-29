@@ -25,6 +25,8 @@ if (!file_exists($targetFile)) {
 
 is_dir($stateDir) or mkdir($stateDir);
 
+while(true):
+
 $fb = new TeaFB($email, $password, $cookieFile);
 if ($fb->login() === $fb::LOGIN_OK) {
 
@@ -42,7 +44,6 @@ if ($fb->login() === $fb::LOGIN_OK) {
 	};
 	$post = new Post($fb);
 	$profile = new Profile($fb);
-
 
 	// Load targets.
 	$target = json_decode(preg_replace("/\/\/.+\n/", "", file_get_contents(__DIR__."/../storage/{$user}/target.json")), true);
@@ -87,5 +88,14 @@ if ($fb->login() === $fb::LOGIN_OK) {
 		file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 	}
 } else {
-	printf("Login failed!\n");
+	printf("Login failed!\n%s\n", date("Y-m-d H:i:s"));
+	exit(1);
 }
+
+print "Sleeping 60 seconds";
+for ($i=0; $i < 60; $i++) { 
+	sleep(1);
+	print ".";
+}
+
+endwhile;
