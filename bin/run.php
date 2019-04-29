@@ -70,12 +70,12 @@ if ($fb->login() === $fb::LOGIN_OK) {
 				print "Skipping {$storyId}, it has already been reacted.\n";
 			} else {
 				print "Visiting target's post: {$storyId}...\n";
-				// $postInfo = $post->visit($storyId);
-				$react = "skipped";
-				// $react = $reactChooser($v);
+				$postInfo = $post->visit($storyId);
+				// $react = "skipped";
+				$react = $reactChooser($v);
 				print "Decided to use {$react} react.\n";
 				print "Reacting {$storyId}...";
-				// $postInfo->react($react);
+				$postInfo->react($react);
 				print "OK\n";
 				$state["reacted"][$storyId] = [
 					"react" => $react,
