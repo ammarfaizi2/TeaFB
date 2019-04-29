@@ -10,10 +10,13 @@ namespace TeaFB\Utils\Post;
  */
 final class React
 {
-	public const LIKE = (1 << 0);
-	public const LOVE = (1 << 1);
-	public const HAHA = (1 << 2);
-	public const WOW = (1 << 3);
-	public const SAD = (1 << 4);
-	public const ANGRY = (1 << 5);
+	public const LIKE = "LIKE";
+	public const LOVE = "LOVE";
+	public const HAHA = "HAHA";
+	public const WOW = "WOW";
+	public const SAD = "SAD";
+	public const ANGRY = "ANGRY";
+
+	public const HAS_ALREADY_BEEN_REACTED = (1 << 0);
+	public const OK = (1 << 0);
 }

@@ -116,25 +116,65 @@ final class PostInfo implements SubUtilContract
 	}
 
 	/**
-	 * @param int $reactEnum
+	 * @param bool $changeNextReferer
+	 * @return array
+	 */
+	public function getReactList(bool $changeNextReferer = false): array
+	{
+		$o = $this->fb->exec($this->reactionLink, [CURLOPT_REFERER => $this->nextReferer]);
+		if ($changeNextReferer) {
+			$this->nextReferer = $o->info["url"];
+		}
+		if (preg_match_all("/(?:<a href=\")(\/ufi\/reaction\/.+)(?:\")(.+<\/table>)/Usi", $o->out, $m)) {
+			unset($m[0]);
+			$list = [];
+			$removePtr = null;
+			foreach ($m[2] as $k => $v) {
+				if (preg_match("/(?:<span.*>)(.*)(?:<)/Usi", $v, $mm)) {
+					$list[$react = strtoupper(ed($mm[1]))] = ed($m[1][$k]);
+					if (preg_match("/\(remove\)/Usi", $v)) {
+						$removePtr = $react;
+					}
+				}
+			}
+			unset($react, $m, $mm);
+		}
+
+		return [
+			"remove_ptr" => $removePtr,
+			"list" => $list
+		];
+	}
+
+	/**
+	 * @param string $reactEnum
 	 * @throws \TeaFB\Exceptions\PostException
 	 * @return int
 	 */
-	public function react(int $reactEnum): int
+	public function react(string $reactEnum): int
 	{
+		$reactEnum = strtoupper($reactEnum);
+
 		if (
-			$reactEnum !== React::LIKE ||
-			$reactEnum !== React::LOVE ||
-			$reactEnum !== React::HAHA ||
-			$reactEnum !== React::WOW  ||
-			$reactEnum !== React::SAD  ||
+			$reactEnum !== React::LIKE &&
+			$reactEnum !== React::LOVE &&
+			$reactEnum !== React::HAHA &&
+			$reactEnum !== React::WOW  &&
+			$reactEnum !== React::SAD  &&
 			$reactEnum !== React::ANGRY
 		) {
 			throw new PostException("Invalid reeaction {$reactEnum}");
 		}
 
-		$o = $this->fb->exec($this->reactionLink, [CURLOPT_REFERER => $this->nextReferer]);
-		file_put_contents("a.tmp", $o->out);
+		$rl = $this->getReactList(true);
+
+		if ($rl["remove_ptr"] === $reactEnum) {
+			return React::HAS_ALREADY_BEEN_REACTED;
+		}
+		
+		$this->exec($rl["list"][$reactEnum], [CURLOPT_REFERER => $this->nextReferer]);
+
+		return React::OK;
 	}
 
 	/**
