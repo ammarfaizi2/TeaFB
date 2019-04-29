@@ -84,15 +84,15 @@ if ($fb->login() === $fb::LOGIN_OK) {
 							"react" => $react,
 							"content" => $postInfo->getContent(),
 							"reacted_at" => date("Y-m-d H:i:s")
-						];	
+						];
+						$state["last_reacted"] = date("Y-m-d H:i:s");
+						file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 					} catch (PostException $e) {
 						print "Got post exception for {$username}_{$storyId}!\n";
 						print $e->getMessage()."\n";
 					}
 				}
 			}
-			$state["last_reacted"] = date("Y-m-d H:i:s");
-			file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
 		} catch (ProfileException $e) {
 			print "Got profile exception for {$username}!\n";
 			print $e->getMessage()."\n";
