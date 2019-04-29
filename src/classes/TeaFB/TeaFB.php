@@ -73,7 +73,52 @@ final class TeaFB
 	 */
 	public function login(): bool
 	{
+		$o = $this->exec("login.php");
 
+		// // Put debug flag.
+		// file_put_contents("a.tmp", $o->out);
+
+		// // Use debug flag.
+		// $o = new stdClass;
+		// $o->out = file_get_contents("a.tmp");
+
+		$m = [];
+		if (preg_match("/(?:<form.+action=\")(.+)(?:\")/Usi", $o->out, $m)) {
+			$action = ed($m[1]);
+			$post = [];
+			if (preg_match_all("/<input[^\>\<]+type=\"hidden\"[^\>\<]+>/Usi", $o->out, $m)) {
+				foreach ($m[0] as $k => $v) {
+					if (preg_match("/(?:name=\")(.+)(?:\")/Usi", $v, $m)) {
+						$name = ed($m[1]);
+						if (preg_match("/(?:value=\")(.+)(\")/Usi", $v, $m)) {
+							$post[$name] = ed($m[1]);
+						} else {
+							$post[$name] = "";
+						}
+					}
+				}
+				unset($name, $m, $k, $v);
+				$this->exec(
+					$action,
+					[
+						CURLOPT_POST => true,
+						CURLOPT_POSTFIELDS => http_build_query($post),
+						CURLOPT_REFERER => $o->info["url"]
+					]
+				);
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param string $url
+	 * @return void
+	 */
+	public function setBaseUrl(string $url): void
+	{
+		$this->baseUrl = $url;
 	}
 
 	/**

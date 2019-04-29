@@ -17,4 +17,6 @@ function teaFBInternalAutoloader(string $class): void
 
 spl_autoload_register("teaFBInternalAutoloader");
 
+require __DIR__."/helpers.php";
+
 endif;
