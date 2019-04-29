@@ -141,6 +141,14 @@ final class TeaFB
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getBaseUrl(): string
+	{
+		return $this->baseUrl;
+	}
+
+	/**
 	 * @param string $url
 	 * @return void
 	 */
@@ -196,7 +204,8 @@ final class TeaFB
 			CURLOPT_CONNECTTIMEOUT => 60,
 			CURLOPT_COOKIEFILE => $this->cookieFile,
 			CURLOPT_COOKIEJAR => $this->cookieFile,
-			CURLOPT_USERAGENT => $this->userAgent
+			CURLOPT_USERAGENT => $this->userAgent,
+			CURLOPT_FOLLOWLOCATION => false
 		];
 		if (isset($this->proxyOpt) && is_array($this->proxyOpt)) {
 			foreach ($this->proxyOpt as $key => $value) {
