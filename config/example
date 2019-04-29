@@ -1,0 +1,5 @@
+<?php
+
+$email = "ammarfaizi2@gmail.com";
+$password = "mypassword123";
+$cookieFile = __DIR__."/cookies/ammarfaizi2.cookie";
