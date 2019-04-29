@@ -17,7 +17,7 @@ if ($fb->login() === $fb::LOGIN_OK) {
 	// }
 
 	$posts = $profile->visit("ammarfaizi2")->getReactablePosts();
-	$post->visit($posts[1])->react(React::LIKE);
+	$post->visit($posts[1])->react(React::WOW);
 
 } else {
 	printf("Login failed!\n");

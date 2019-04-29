@@ -172,7 +172,7 @@ final class PostInfo implements SubUtilContract
 			return React::HAS_ALREADY_BEEN_REACTED;
 		}
 		
-		$this->exec($rl["list"][$reactEnum], [CURLOPT_REFERER => $this->nextReferer]);
+		$this->fb->exec($rl["list"][$reactEnum], [CURLOPT_REFERER => $this->nextReferer]);
 
 		return React::OK;
 	}
