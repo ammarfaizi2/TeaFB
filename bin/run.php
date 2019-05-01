@@ -46,8 +46,8 @@ while(true):
     		}
     		return $reacts[rand(0, count($reacts) - 1)];
     	};
-    	$post = new Post($fb);
-    	$profile = new Profile($fb);
+        $post = new Post($fb);
+        $profile = new Profile($fb);
     
     	// Load targets.
     	$target = json_decode(preg_replace("/\/\/.+\n/", "", file_get_contents(__DIR__."/../storage/{$user}/target.json")), true);
@@ -109,18 +109,14 @@ while(true):
     		}
     
     		$pids[] = $pid;
-    		if (count($pids) >= 5) {
-    		    while (true) {
-    		        foreach ($pids as $k => $pid) {
-    		            if (pcntl_waitpid($pid, $status, WNOHANG) == -1) {
-    		                unset($pids[$k]);
-    		                goto next_loop;
-    		            }
-    		        }
-    		        sleep(1);
-    		    }
-    		}
-    next_loop:
+		    while (count($pids) >= 5) {
+		        foreach ($pids as $k => $pid) {
+		            if (pcntl_waitpid($pid, $status, WNOHANG) == -1) {
+		                unset($pids[$k]);
+		            }
+		        }
+		        sleep(2);
+		    }
     	}
     	
     	unset($target, $fb, $post, $profile);
