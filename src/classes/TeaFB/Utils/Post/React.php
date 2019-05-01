@@ -18,5 +18,5 @@ final class React
 	public const ANGRY = "ANGRY";
 
 	public const HAS_ALREADY_BEEN_REACTED = (1 << 0);
-	public const OK = (1 << 0);
+	public const OK = (1 << 1);
 }
