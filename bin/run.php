@@ -5,6 +5,7 @@ if (!isset($argv[1])) {
 }
 
 $user = $argv[1];
+$workerAmount = 5;
 
 require __DIR__."/../src/autoload.php";
 require __DIR__."/../config/{$user}.php";
@@ -46,9 +47,15 @@ while(true):
     		}
     		return $reacts[rand(0, count($reacts) - 1)];
     	};
-        $post = new Post($fb);
-        $profile = new Profile($fb);
-    
+
+        unset($fb);
+
+        $cookiePointer = 0;
+        $cookies = [];
+        for ($i=1; $i <= $workerAmount; $i++) { 
+            copy($cookieFile, $cookies[] = $cookieFile.".worker.{$i}");
+        }
+
     	// Load targets.
     	$target = json_decode(preg_replace("/\/\/.+\n/", "", file_get_contents(__DIR__."/../storage/{$user}/target.json")), true);
         
@@ -57,6 +64,11 @@ while(true):
     	// React targets.
     	foreach ($target as $username => $v) {
     		if (!($pid = pcntl_fork())) {
+
+                $fb = new TeaFB($email, $password, $cookies[$cookiePointer % $workerAmount]);
+                $post = new Post($fb);
+                $profile = new Profile($fb);
+
     		    cli_set_process_title("worker --target {$username}");
     		    sleep(1);
     		    print "Visiting target profile: {$username}...\n";
@@ -107,9 +119,11 @@ while(true):
         		}
         		exit;
     		}
+
+            $cookiePointer++;
     
     		$pids[] = $pid;
-		    while (count($pids) >= 5) {
+		    while (count($pids) >= $workerAmount) {
 		        foreach ($pids as $k => $pid) {
 		            if (pcntl_waitpid($pid, $status, WNOHANG) == -1) {
 		                unset($pids[$k]);
@@ -136,6 +150,12 @@ while(true):
     }
 
     unset($pids);
+
+    print "Cleaning up worker's cookies...\n";
+    foreach ($cookies as $cookie_) {
+        file_exists($cookie_) and unlink($cookie_) and print "Removed {$cookie_}\n";
+    }
+    unset($cookies, $cookie_);
     
     print "Sleeping 60 seconds";
     for ($i=0; $i < 60; $i++) { 
