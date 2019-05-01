@@ -103,8 +103,8 @@ if ($fb->login() === $fb::LOGIN_OK) {
 	exit(1);
 }
 
-print "Sleeping 60 seconds";
-for ($i=0; $i < 60; $i++) { 
+print "Sleeping 30 seconds";
+for ($i=0; $i < 30; $i++) { 
 	sleep(1);
 	print ".";
 }
