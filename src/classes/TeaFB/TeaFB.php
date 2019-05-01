@@ -138,10 +138,6 @@ do_login:
 			return self::LOGIN_OK;
 		}
 
-		if (preg_match("/checkpoint/", $o)) {
-			return self::LOGIN_CHECKPOINT;
-		}
-
 		if (!$triedBackupFile) {
 			if (file_exists($this->cookieFile.".bak")) {
 				$triedBackupFile = true;
@@ -151,6 +147,10 @@ do_login:
 			}
 		} else {
 			unlink($this->cookieFile.".bak");
+		}
+
+		if (preg_match("/checkpoint/", $o)) {
+			return self::LOGIN_CHECKPOINT;
 		}
 
 		return self::LOGIN_FAILED;
