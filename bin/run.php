@@ -53,6 +53,7 @@ while(true):
         $cookiePointer = 0;
         $cookies = [];
         for ($i=1; $i <= $workerAmount; $i++) { 
+            file_exists($cookieFile.".worker.{$i}") and unlink($cookieFile.".worker.{$i}");
             copy($cookieFile, $cookies[] = $cookieFile.".worker.{$i}");
         }
 
