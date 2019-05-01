@@ -119,12 +119,13 @@ while(true):
 		    }
     	}
     	
-    	unset($target, $fb, $post, $profile);
+    	unset($target, $fb, $post, $profile, $reactChooser, $username, $k);
     } else {
     	printf("Login failed!\n%s\n", date("Y-m-d H:i:s"));
     	exit(1);
     }
     
+    // Clean up.
     while (count($pids) > 0) {
         foreach ($pids as $k => $pid) {
             if (pcntl_waitpid($pid, $status, WNOHANG) == -1) {
@@ -133,6 +134,8 @@ while(true):
         }
         sleep(1);
     }
+
+    unset($pids);
     
     print "Sleeping 60 seconds";
     for ($i=0; $i < 60; $i++) { 
