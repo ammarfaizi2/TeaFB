@@ -88,6 +88,10 @@ final class TeaFB
 	 */
 	public function login(): int
 	{
+
+		$triedBackupFile = false;
+
+do_login:
 		$o = $this->exec("login.php");
 
 		// // Put debug flag.
@@ -130,11 +134,23 @@ final class TeaFB
 		$o = file_get_contents($this->cookieFile);
 
 		if (preg_match_all("/c_user/", $o)) {
+			copy($this->cookieFile, $this->cookieFile.".bak");
 			return self::LOGIN_OK;
 		}
 
 		if (preg_match("/checkpoint/", $o)) {
 			return self::LOGIN_CHECKPOINT;
+		}
+
+		if (!$triedBackupFile) {
+			if (file_exists($this->cookieFile.".bak")) {
+				$triedBackupFile = true;
+				unlink($this->cookieFile);
+				copy($this->cookieFile.".bak", $this->cookieFile);
+				goto do_login;
+			}
+		} else {
+			unlink($this->cookieFile.".bak");
 		}
 
 		return self::LOGIN_FAILED;
