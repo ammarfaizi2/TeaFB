@@ -16,6 +16,8 @@ use TeaFB\Utils\Post\React;
 use TeaFB\Exceptions\PostException;
 use TeaFB\Exceptions\ProfileException;
 
+pcntl_signal(SIGCHLD, SIG_IGN);
+
 $userDir = __DIR__."/../storage/{$user}";
 $targetFile = "{$userDir}/target.json";
 $stateDir = "{$userDir}/state";
@@ -29,84 +31,118 @@ is_dir($stateDir) or mkdir($stateDir);
 
 while(true):
 
-$fb = new TeaFB($email, $password, $cookieFile);
-if ($fb->login() === $fb::LOGIN_OK) {
+    $fb = new TeaFB($email, $password, $cookieFile);
+    if ($fb->login() === $fb::LOGIN_OK) {
+    
+    	/**
+    	 * Init.
+    	 */
+    	$reactChooser = function ($inputReacts) {
+    		$reacts = [];
+    		foreach ($inputReacts as $k => $v) {
+    			for ($i=0; $i < $v; $i++) { 
+    				$reacts[] = $k;
+    			}
+    		}
+    		return $reacts[rand(0, count($reacts) - 1)];
+    	};
+    	$post = new Post($fb);
+    	$profile = new Profile($fb);
+    
+    	// Load targets.
+    	$target = json_decode(preg_replace("/\/\/.+\n/", "", file_get_contents(__DIR__."/../storage/{$user}/target.json")), true);
+        
+        $pids = [];
+        
+    	// React targets.
+    	foreach ($target as $username => $v) {
+    		if (!($pid = pcntl_fork())) {
+    		    cli_set_process_title("worker --target {$username}");
+    		    sleep(1);
+    		    print "Visiting target profile: {$username}...\n";
+    
+        		// Load state.
+        		$stateFile = "{$stateDir}/{$username}.json";
+        		if (!file_exists($stateFile)) {
+        			$state = [];
+        		} else {
+        			$state = json_decode(file_get_contents($stateFile), true);
+        			if (!is_array($state)) {
+        				$state = [];
+        			}
+        		}
+        		$state["username"] = $username;
+        		$state["last_reacted"] = null;
+    
+        		try {
+        			foreach($profile->visit($username)->getReactablePosts() as $storyId) {
+        				if (isset($state["reacted"][$storyId])) {
+        					print "Skipping {$storyId}, it has already been reacted.\n";
+        				} else {
+        					try {
+        						print "Visiting target's post: {$storyId}...\n";
+        						$postInfo = $post->visit($storyId);
+        						// $react = "skipped";
+        						$react = $reactChooser($v);
+        						print "Decided to use {$react} react.\n";
+        						print "Reacting {$storyId}...";
+        						$postInfo->react($react);
+        						print "OK\n";
+        						$state["reacted"][$storyId] = [
+        							"react" => $react,
+        							"content" => $postInfo->getContent(),
+        							"reacted_at" => date("Y-m-d H:i:s")
+        						];
+        						$state["last_reacted"] = date("Y-m-d H:i:s");
+        						file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        					} catch (PostException $e) {
+        						print "Got post exception for {$username}_{$storyId}!\n";
+        						print $e->getMessage()."\n";
+        					}
+        				}
+        			}
+        		} catch (ProfileException $e) {
+        			print "Got profile exception for {$username}!\n";
+        			print $e->getMessage()."\n";
+        		}
+        		exit;
+    		}
+    
+    		$pids[] = $pid;
+    		if (count($pids) >= 5) {
+    		    while (true) {
+    		        foreach ($pids as $k => $pid) {
+    		            if (pcntl_waitpid($pid, $status, WNOHANG) == -1) {
+    		                unset($pids[$k]);
+    		                goto next_loop;
+    		            }
+    		        }
+    		        sleep(1);
+    		    }
+    		}
+    next_loop:
+    	}
+    	
+    	unset($target, $fb, $post, $profile);
+    } else {
+    	printf("Login failed!\n%s\n", date("Y-m-d H:i:s"));
+    	exit(1);
+    }
+    
+    while (count($pids) > 0) {
+        foreach ($pids as $k => $pid) {
+            if (pcntl_waitpid($pid, $status, WNOHANG) == -1) {
+                unset($pids[$k]);
+            }
+        }
+        sleep(1);
+    }
+    
+    print "Sleeping 60 seconds";
+    for ($i=0; $i < 60; $i++) { 
+    	sleep(1);
+    	print ".";
+    }
+    print "\n";
 
-	/**
-	 * Init.
-	 */
-	$reactChooser = function ($inputReacts) {
-		$reacts = [];
-		foreach ($inputReacts as $k => $v) {
-			for ($i=0; $i < $v; $i++) { 
-				$reacts[] = $k;
-			}
-		}
-		return $reacts[rand(0, count($reacts) - 1)];
-	};
-	$post = new Post($fb);
-	$profile = new Profile($fb);
-
-	// Load targets.
-	$target = json_decode(preg_replace("/\/\/.+\n/", "", file_get_contents(__DIR__."/../storage/{$user}/target.json")), true);
-
-	// React targets.
-	foreach ($target as $username => $v) {
-		print "Visiting target profile: {$username}...\n";
-
-		// Load state.
-		$stateFile = "{$stateDir}/{$username}.json";
-		if (!file_exists($stateFile)) {
-			$state = [];
-		} else {
-			$state = json_decode(file_get_contents($stateFile), true);
-			if (!is_array($state)) {
-				$state = [];
-			}
-		}
-		$state["username"] = $username;
-		$state["last_reacted"] = null;
-		try {
-			foreach($profile->visit($username)->getReactablePosts() as $storyId) {
-				if (isset($state["reacted"][$storyId])) {
-					print "Skipping {$storyId}, it has already been reacted.\n";
-				} else {
-					try {
-						print "Visiting target's post: {$storyId}...\n";
-						$postInfo = $post->visit($storyId);
-						// $react = "skipped";
-						$react = $reactChooser($v);
-						print "Decided to use {$react} react.\n";
-						print "Reacting {$storyId}...";
-						$postInfo->react($react);
-						print "OK\n";
-						$state["reacted"][$storyId] = [
-							"react" => $react,
-							"content" => $postInfo->getContent(),
-							"reacted_at" => date("Y-m-d H:i:s")
-						];
-						$state["last_reacted"] = date("Y-m-d H:i:s");
-						file_put_contents($stateFile, json_encode($state, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-					} catch (PostException $e) {
-						print "Got post exception for {$username}_{$storyId}!\n";
-						print $e->getMessage()."\n";
-					}
-				}
-			}
-		} catch (ProfileException $e) {
-			print "Got profile exception for {$username}!\n";
-			print $e->getMessage()."\n";
-		}
-	}
-} else {
-	printf("Login failed!\n%s\n", date("Y-m-d H:i:s"));
-	exit(1);
-}
-
-print "Sleeping 30 seconds";
-for ($i=0; $i < 30; $i++) { 
-	sleep(1);
-	print ".";
-}
-print "\n";
 endwhile;
