@@ -5,7 +5,7 @@ if (!isset($argv[1])) {
 }
 
 $user = $argv[1];
-$workerAmount = 5;
+$workerAmount = 2;
 
 require __DIR__."/../src/autoload.php";
 require __DIR__."/../config/{$user}.php";
@@ -158,8 +158,8 @@ while(true):
     }
     unset($cookies, $cookie_);
     
-    print "Sleeping 60 seconds";
-    for ($i=0; $i < 60; $i++) { 
+    print "Sleeping 180 seconds";
+    for ($i=0; $i < 180; $i++) { 
     	sleep(1);
     	print ".";
     }
