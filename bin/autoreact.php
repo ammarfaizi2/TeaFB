@@ -1,11 +1,14 @@
 <?php
 
+// Script autoreact.
+
 if (!isset($argv[1])) {
 	print "argv[1] is needed!\n";
 }
 
 $user = $argv[1];
 $workerAmount = 2;
+$delayPerCycle = 300;
 
 require __DIR__."/../src/autoload.php";
 require __DIR__."/../config/{$user}.php";
@@ -158,8 +161,8 @@ while(true):
     }
     unset($cookies, $cookie_);
     
-    print "Sleeping 180 seconds";
-    for ($i=0; $i < 180; $i++) { 
+    print "Sleeping {$delayPerCycle} seconds";
+    for ($i=0; $i < $delayPerCycle; $i++) { 
     	sleep(1);
     	print ".";
     }

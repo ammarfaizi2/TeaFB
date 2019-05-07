@@ -65,8 +65,11 @@ final class BrowserStream
 	 */
 	public function __construct(TeaFB $fb)
 	{
-		if (preg_match("/^\/sem_pixel/USsi", $_SERVER["REQUEST_URI"])) {
-			http_response_code(400);
+		if (
+			(PHP_SAPI === 'cli' || PHP_SAPI === 'cli-server') && 
+			preg_match("/^\/sem_pixel/USsi", $_SERVER["REQUEST_URI"])
+		) {
+			http_response_code(200);
 			exit;
 		}
 		$this->fb = $fb;
@@ -88,15 +91,19 @@ final class BrowserStream
 	private function getRequest(): void
 	{
 		if ($this->routerType === self::ROUTER_QUERY_STRING) {
-			if (isset($_GET["url"]) && is_string($_GET["url"])) {
-				$this->url = rawurldecode($_GET["url"]);
+			if (isset($_GET["___u"]) && is_string($_GET["___u"])) {
+				$this->url = rawurldecode($_GET["___u"]);
 			} else {
 				$this->url = "";
 			}
 
 			if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 				$this->opt[CURLOPT_CUSTOMREQUEST] = $_SERVER["REQUEST_METHOD"];
-				$this->opt[CURLOPT_POSTFIELDS] = file_get_contents("php://input");
+				if (preg_match("/multipart\/form\-data/Usi", $_SERVER["HTTP_CONTENT_TYPE"])) {
+					$this->opt[CURLOPT_POSTFIELDS] = $_POST;
+				} else {
+					$this->opt[CURLOPT_POSTFIELDS] = file_get_contents("php://input");
+				}
 			}
 		}
 	}
@@ -122,8 +129,8 @@ final class BrowserStream
 				$v[1] = trim($v[1]);
 				if ($this->routerType === self::ROUTER_QUERY_STRING && $vs === "location") {
 					$me = $_GET;
-					unset($me["url"]);
-					$v[1] = "?url=".urlencode(rawurlencode($v[1]))."&".http_build_query($me);
+					unset($me["___u"]);
+					$v[1] = "?___u=".urlencode(rawurlencode($v[1]))."&".http_build_query($me);
 				}
 				if ($vs === "content-type") {
 					if (preg_match("/text\/html/", $v[1])) {
@@ -156,16 +163,18 @@ final class BrowserStream
 	private function replacer(string &$res): void
 	{
 		$me = $_GET;
-		unset($me["url"]);
+		unset($me["___u"]);
 		$upquery = "&".http_build_query($me);
 		if (strlen($upquery) === 1) {
 			$upquery = "";
+		} else {
+			$upquery = htmlspecialchars($upquery, ENT_QUOTES, "UTF-8");
 		}
 		if (preg_match_all("/(?:href=\")(.+)(?:\")/Usi", $res, $m)) {
 			$r1 = $r2 = [];
 			foreach ($m[1] as $url) {
 				$r1[] = "href=\"".$url."\"";
-				$r2[] = "href=\"?url=".urlencode(rawurlencode(ed($url))).$upquery."\"";
+				$r2[] = "href=\"?___u=".urlencode(rawurlencode(ed($url))).$upquery."\"";
 			}
 			$res = str_replace($r1, $r2, $res);
 		}
@@ -174,7 +183,7 @@ final class BrowserStream
 			$r1 = $r2 = [];
 			foreach ($m[1] as $url) {
 				$r1[] = "action=\"".$url."\"";
-				$r2[] = "action=\"?url=".urlencode(rawurlencode(ed($url))).$upquery."\"";
+				$r2[] = "action=\"?___u=".urlencode(rawurlencode(ed($url))).$upquery."\"";
 			}
 			$res = str_replace($r1, $r2, $res);
 		}
@@ -183,7 +192,7 @@ final class BrowserStream
 			$r1 = $r2 = [];
 			foreach ($m[1] as $url) {
 				$r1[] = "src=\"".$url."\"";
-				$r2[] = "src=\"?url=".urlencode(rawurlencode(ed($url))).$upquery."\"";
+				$r2[] = "src=\"?___u=".urlencode(rawurlencode(ed($url))).$upquery."\"";
 			}
 			$res = str_replace($r1, $r2, $res);
 		}
