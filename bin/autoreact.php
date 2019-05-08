@@ -151,7 +151,7 @@ while(true):
                 unset($pids[$k]);
             }
         }
-        sleep(1);
+        sleep(2);
     }
 
     unset($pids);
