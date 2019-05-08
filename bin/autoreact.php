@@ -104,6 +104,7 @@ while(true):
         						print "Reacting {$storyId}...";
         						$postInfo->react($react);
         						print "OK\n";
+                                sleep(3);
         						$state["reacted"][$storyId] = [
         							"react" => $react,
         							"content" => $postInfo->getContent(),
